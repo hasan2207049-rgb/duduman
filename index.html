@@ -400,6 +400,11 @@ const ETYPES=[
   {name:'Speeder',col:0x00ff88, em:0x004422, hp:35,  spd:0.095, sz:[0.7,1.0,0.7], sc:200, dmg:5 },
 ];
 
+const enemyTexture=new THREE.TextureLoader().load('enemy-removebg-preview.png');
+enemyTexture.encoding=THREE.sRGBEncoding;
+enemyTexture.anisotropy=renderer.capabilities.getMaxAnisotropy();
+const ENEMY_IMAGE_ASPECT=400/471;
+
 let enemies=[], particles=[], bullets=[];
 let wave=1, waveTotal=0, waveKills=0;
 
@@ -408,19 +413,21 @@ function spawnEnemy(type){
   const dist=12+Math.random()*16;
   const x=Math.cos(angle)*dist, z=Math.sin(angle)*dist;
 
-  const geo=new THREE.BoxGeometry(...type.sz);
-  const mat=new THREE.MeshStandardMaterial({color:type.col, roughness:0.3, metalness:0.5, emissive:new THREE.Color(type.em)});
-  const mesh=new THREE.Mesh(geo,mat);
+  const mesh=new THREE.Group();
   mesh.position.set(x, type.sz[1]/2, z);
-  mesh.castShadow=true; scene.add(mesh);
+  scene.add(mesh);
 
-  [-0.22,0.22].forEach(ex=>{
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8), new THREE.MeshStandardMaterial({color:0x00ffcc,emissive:0x00ffcc,emissiveIntensity:3}));
-    eye.position.set(ex, type.sz[1]*0.22, -type.sz[2]/2-0.01); mesh.add(eye);
-  });
-
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(type.sz[0]*0.55,0.06,8,20), new THREE.MeshBasicMaterial({color:type.col}));
-  ring.rotation.x=Math.PI/2; ring.position.y=type.sz[1]*0.5; mesh.add(ring);
+  const spriteHeight=type.sz[1]*1.35;
+  const enemyFace=new THREE.Sprite(new THREE.SpriteMaterial({
+    map:enemyTexture,
+    transparent:true,
+    alphaTest:0.04,
+    depthWrite:true
+  }));
+  enemyFace.scale.set(spriteHeight*ENEMY_IMAGE_ASPECT, spriteHeight, 1);
+  enemyFace.position.y=(spriteHeight-type.sz[1])/2;
+  enemyFace.castShadow=true;
+  mesh.add(enemyFace);
 
   const bgBar=new THREE.Mesh(new THREE.PlaneGeometry(type.sz[0]+0.3,0.18), new THREE.MeshBasicMaterial({color:0x550000,side:THREE.DoubleSide,depthTest:false}));
   bgBar.position.set(0,type.sz[1]/2+0.45,0); bgBar.renderOrder=1; mesh.add(bgBar);
